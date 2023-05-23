@@ -1,0 +1,119 @@
+<html>
+<head>
+<title>Ruido termico del microfono</title>
+
+<style type="text/css">
+  textarea{
+    width: 390px;
+    background-color: beige;
+    height: 90px;
+  }
+</style>
+<script>
+
+
+    var audioContext = new AudioContext();
+    var microphone = null;
+    var audioStream = null;
+    var input = document.getElementById("value");//document.querySelector('#value');
+    var bin = document.getElementById("bin");//document.querySelector('#bin');
+    var cont = document.getElementById("cont");//document.querySelector('#cont');
+    var contador=0;
+    var tot = document.getElementById("tot");//document.querySelector('#tot');
+    var wallet = document.getElementById("wallet");//document.querySelector('#tot');
+    var total=0;
+    var total10000=0;
+
+
+  window.onload = function() {
+    audioContext = new AudioContext();
+    microphone = null;
+    audioStream = null;
+    input = document.getElementById("value");//document.querySelector('#value');
+    bin = document.getElementById("bin");//document.querySelector('#bin');
+    cont = document.getElementById("cont");//document.querySelector('#cont');
+    contador=0;
+    tot = document.getElementById("tot");//document.querySelector('#tot');
+    wallet=document.getElementById("wallet")
+    total=0;
+    total10000=0;
+
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(successCallback, errorCallback);
+
+    function successCallback(stream) {
+      microphone = audioContext.createMediaStreamSource(stream);
+      audioStream = audioContext.createScriptProcessor(1024, 1, 1);
+      microphone.connect(audioStream);
+      audioStream.connect(audioContext.destination);
+
+      audioStream.onaudioprocess = function(audioProcessingEvent) {
+        var inputBuffer = audioProcessingEvent.inputBuffer;
+        var outputBuffer = audioProcessingEvent.outputBuffer;
+        var inputData = inputBuffer.getChannelData(0);
+        var sum = 0;
+
+        for (var i = 0; i < inputBuffer.length; i++) {
+          sum += Math.abs(inputData[i]);
+        }
+        var average = sum / inputBuffer.length;
+
+        var comparacion =1.01*average/input.value;
+
+        if(comparacion>=1)
+        {
+          bin.value=1;
+          contador++;
+        }
+        else
+        {
+          bin.value=0;
+          contador--;
+        }
+        total++;
+        if(total>=10000){
+          total=0;
+          total10000++;
+        }
+        tot.value=total10000;
+        cont.value=contador;
+        input.value = average;
+
+
+      };
+    }
+
+audioContext.resume();
+
+    function errorCallback(err) {
+      console.log(err);
+    }
+  };
+
+
+var vecesEjecutadas=0;
+function GeneraWallet(){
+  // Aquí va el codigo que se ejecutara 256 veces
+   if(vecesEjecutadas<256){
+    console.log(vecesEjecutadas); 
+    wallet.value=wallet.value+bin.value;
+    vecesEjecutadas++;
+    setTimeout(GeneraWallet, Math.random() * 1000);
+  }
+   else{
+    vecesEjecutadas=0;
+  }
+}
+
+
+</script>
+</head>
+<body>
+  <button onclick="audioContext.resume();">start</button><br>
+  <input type="text" id="value" value="0.0001" /><br>
+  <input type="text" id="bin" /><br>
+  <input type="text" id="cont" /><br>
+  <input type="text-box" id="tot" /><br>
+  <button onclick="wallet.value=''; setTimeout(GeneraWallet, Math.random() * 1000)">Create Wallet</button><br>
+  <div><textarea id="wallet"></textarea></div>
+</body>
+</html>
